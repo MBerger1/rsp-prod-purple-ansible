@@ -1,0 +1,3 @@
+---
+user: $ENV(USER)
+ssh_user: rsp-mgmt

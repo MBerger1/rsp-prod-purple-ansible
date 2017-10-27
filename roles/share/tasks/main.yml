@@ -1,0 +1,10 @@
+---
+  - name: configure /opt/tibco/shared-data on new builds
+    mount:
+      name: "{{ nfsmount }}"
+      opts: "{{ mountoptions }}"
+      fstype: "{{ filesystem }}"
+      src: "{{nfsserver}}:{{export}}"
+      state: mounted
+      dump: 0
+      passno: 0

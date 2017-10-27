@@ -1,0 +1,15 @@
+---
+  - name: run config_engine.sh
+    shell: /opt/tibco/shared-data/vm/config_engine.sh -e perfgreen -g {{ ENV }}
+    ignore_errors: true
+    register: cfgEngine
+    changed_when: "cfgEngine.rc == 0"
+
+  - name: Regather facts...
+    action: setup
+
+  - name: check for rsp-mgmt account
+    shell: "/usr/bin/id rsp-mgmt"
+    register: chkRsp
+    failed_when: "'uid=602' not in chkRsp.stdout"
+    notify: reboot

@@ -1,0 +1,42 @@
+---
+- hosts: "{{ hosts }}"
+  user: "{{user}}"
+  sudo: "{{sudo}}"
+
+  tasks:
+  - name: "check connect"
+    ping:
+    connection: paramiko
+
+  - name: check deploymentclient.conf
+    stat: path=/opt/splunkforwarder/etc/system/local/deploymentclient.conf
+    register: chkFile
+    tags:
+      - scp
+
+  - name: scp deploymentclient.conf if it doesnt exist ( see https://confluence.nordstrom.net/display/RSP/Splunk+Prod+and+Test+forwarder+Settings )
+    copy: src=/home/rsp-mgmt/toolbox/ansible/scripts/deploymentclient.conf dest=/opt/splunkforwarder/etc/system/local
+    when: chkFile.stat.exists == False
+    tags:
+      - scp
+
+  - name: set deploymentclient.conf perms if it exists
+    file: dest=/opt/splunkforwarder/etc/system/local/deploymentclient.conf state=file
+         owner=root group=root
+         mode=0644
+    when: chkFile.stat.exists == True
+    tags:
+      - scp
+
+  - name: start Splunk Daemon
+    command: /opt/splunkforwarder/bin/splunk enable boot-start -user root
+    tags:
+      - startSplunk
+
+  - name: symlink file to init script ( see example below )
+    command: ln -sf /usr/bin/gcc47 /usr/bin/gcc
+    tags:
+      - init
+
+# usage example, tag=scp:
+# ansible-playbook ~/toolbox/ansible/ansible-playbooks/prod-purple-splunk.yml -e "hosts=rspprodpurpleadmin001 user=rsp-mgmt sudo=yes" --tags='scp'

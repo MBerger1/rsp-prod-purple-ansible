@@ -1,0 +1,12 @@
+---
+  - name: start tuned
+    service: name=tuned state=running enabled=yes
+
+  - name: start ktune
+    service: name=ktune state=running enabled=yes
+
+  - name: activate tuned
+    shell: tuned-adm active
+
+  - name: set profile to virtual guest
+    shell: tuned-adm profile virtual-guest
