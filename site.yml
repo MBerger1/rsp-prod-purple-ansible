@@ -1,0 +1,102 @@
+---
+- name: add sdd to prod purple
+  hosts: "{{ hosts }}"
+  user: "{{ user }}"
+  sudo: "{{ sudo }}"
+  roles:
+    - sdd
+  tags:
+    - addsdd
+
+# usage:
+# ansible-playbook ~/toolbox/ansible/ansible-playbooks/site.yml -e "hosts=prod_purple_admin user=rsp-mgmt sudo=yes" --tags='addsdd'
+
+- name: setup NAS mount(s)
+  hosts: "{{ hosts }}"
+  user: "{{ user }}"
+  sudo: "{{ sudo }}"
+  roles:
+    - share
+  tags:
+    - nfs
+
+# usage:
+# ansible-playbook ~/toolbox/ansible/ansible-playbooks/site.yml -e "hosts=prod_purple_admin user=rsp-mgmt sudo=yes" --tags='nfs'
+
+- name: run config_engine scripts
+  hosts: "{{ hosts }}"
+  user: "{{ user }}"
+  sudo: "{{ sudo }}"
+  roles:
+    - engine
+  tags:
+    - engine
+
+# allowable groups
+# rsp_vr rsp_ems rsp_bw rsp_bwpm rsp_be rsp_admin rsp_as rsp_oracle rsp_bpm
+
+# This may need to be run multiple times on a given subset of hosts.  See below.
+# usage:
+# ansible-playbook ~/ansible-playbooks/site.yml --extra-vars="hosts=perf_green_adm user=root sudo=no ENV=rsp_admin" --tags='engine' -k
+# ansible-playbook ~/ansible-playbooks/site.yml -e "hosts=perf_green_as user=rsp-mgmt sudo=yes ENV=rsp_ems|rsp_as|rsp_be|rsp_bw" --tags='engine' -k
+# ansible ~rspperfbas01[0-5] -u root -m shell -a "reboot" -k for hosts that have lock errors in /etc/shadow during rsp-mgmt creation 
+#
+# ( see /opt/tibco/shared-data/vm/logs )
+# Running /opt/tibco/shared-data/vm/engine_scripts/95hawkagent_config.sh
+# Using HAWK_AGENT_CONFIG:  /opt/tibco/cfgmgmt/hawk/biEntry already exists for user rsp-mgmt in file /etc/sudoers!
+# wk/bin/hawkhma.cfg
+# Using HAWK_USER:  fabric
+# Using HMA_PID_FILE:  /opt/tibco/cfgmgmt/hawk/bin/hawkhma.pid
+# Creating the hawkagent init script param file: /etc/sysconfig/hawkagent
+# useradd: cannot lock /etc/passwd; try again later.
+# kagent.cfg...
+# chpasswd: cannot lock /etc/passwd; try again lCreating hawkhma.cfg...
+# ted new users from /opt/tibco/shared-data/vm/engine_scripts/../perfgreen/users file.
+#
+# evidently, tag names and role names do not conflict.  Successful playbook runs bear this out.
+#
+- name: Install all the packages for a rsp RH host
+  hosts: "{{ hosts }}"
+  user: "{{ user }}"
+  sudo: "{{ sudo }}"
+  roles:
+    - packages
+  tags:
+    - yum
+
+# usage:
+# ansible-playbook ~/ansible-playbooks/site.yml -e "hosts=perf_green_as user=rsp-mgmt sudo=yes" --tags='yum' -k
+
+- name: deal with sudoers and copy over rsp-mgmt public key
+  hosts: "{{ hosts }}"
+  user: "{{ user }}"
+  sudo: "{{ sudo }}"
+  roles:
+    - common
+  tags:
+    - common
+
+# usage:
+# ansible-playbook ~/ansible-playbooks/site.yml -e "hosts=perf_green_as user=rsp-mgmt sudo=yes" --tags='common' -k
+
+- name: startup tuned
+  hosts: "{{ hosts }}"
+  user: "{{ user }}"
+  sudo: "{{ sudo }}"
+  roles:
+    - tuned
+  tags:
+    - tuned
+
+# usage:
+# ansible-playbook ~/ansible-playbooks/site.yml -e "hosts=perf_green_as user=rsp-mgmt sudo=yes" --tags='tuned' -k
+
+- name: turn off root access and restart sshd
+  hosts: "{{ hosts }}"
+  user: "{{ user }}"
+  sudo: "{{ sudo }}"
+  roles:
+    - security
+  tags:
+    - sshd
+

@@ -1,0 +1,24 @@
+---
+  # - name: INIT | check RHN
+    # shell: rhn_check
+    # ignore_errors: true
+    # register: rhnChk
+    # changed_when: "rhnChk.rc != 0"
+
+  - name: install RH Satellite
+    shell: "/home/rsp-mgmt/rhnreg56.sh"
+    register: rhn
+    changed_when: "rhn.rc == 0"
+
+  - name: add packages
+    yum: name={{ item }} state=latest
+    with_items:
+      - libselinux-python.x86_64
+      - atop.x86_64
+      - libcgroup.x86_64
+      - ltrace.x86_64
+      - valgrind.x86_64
+      - nc.x86_64
+      - tuned.noarch
+      - tuned-utils.noarch
+    when: rhn|changed

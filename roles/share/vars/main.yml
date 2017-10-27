@@ -1,0 +1,9 @@
+---
+# vars for share
+nfsserver: rspprodnas01
+nfsmount: /opt/tibco/shared-data
+export: /prd_data04/sharedata_d
+filesystem: nfs4
+mountoptions: rw,intr,hard,bg,nosuid
+user: $ENV(USER)
+ssh_user: rsp-mgmt

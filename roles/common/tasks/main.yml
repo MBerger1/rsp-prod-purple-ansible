@@ -1,0 +1,22 @@
+---
+  - name: fix /etc/sudoers ! requiretty
+    shell: perl -npe ' s/(^Defaults\s+requiretty$)/#$1/g' -i /etc/sudoers
+    tags: 
+
+  - name: fix /etc/sudoers rsp-mgmt
+    # require double quotes around the perl string in order to escape the second :
+    shell: 'perl -npe " s/(^rsp-mgmt\s*ALL=\(ALL\)\s+ALL$)/rsp-mgmt\tALL=(ALL)\tNOPASSWD: ALL/g " -i /etc/sudoers'
+    tags: 
+
+  # only needs to be done once -NFS mount
+  # - name: set permissions on /opt/tibco
+    # file: dest=/opt/tibco state=directory
+         # owner=fabric group=fabric_grp
+         # mode=0775
+         # recurse=no
+    # tags: 
+      # - perm
+      # - all
+
+  - name: Install ssh public key from rsp-mgmt account
+    authorized_key: user=rsp-mgmt key="{{ lookup('file', '/home/rsp-mgmt/.ssh/id_rsa.pub') }}"

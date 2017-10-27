@@ -1,0 +1,5 @@
+---
+vg: vg01
+lv: lv_splunkforwarder
+mount: /opt/splunkforwarder
+filesystem: ext4

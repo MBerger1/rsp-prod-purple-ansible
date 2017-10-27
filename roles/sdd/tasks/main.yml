@@ -1,0 +1,46 @@
+---
+  - name: scp ~/tmp/fdisk.sdd /home/rsp-mgmt/tmp
+    copy: src=/home/rsp-mgmt/tmp/fdisk.sdd dest=/home/rsp-mgmt
+
+  - name: check for existing LVM partition
+    shell: fdisk -l /dev/sdd|grep '/dev/sdd1'
+    register: parChk
+    changed_when: "'sdd1' not in parChk.stdout"
+
+  - debug: msg="{{ parChk }}"
+ 
+  - name: partition the new disk
+    shell: fdisk /dev/sdd < /home/rsp-mgmt/fdisk.sdd
+    when: parChk|changed
+
+  - name: create the physical volume
+    shell: pvcreate /dev/sdd1
+    register: mkPv
+    changed_when: "mkPv.rc == 0"
+    when: parChk|changed
+
+  - name: add it to vg01
+    shell: vgextend vg01 /dev/sdd1
+    when: parChk|changed
+
+  - name: create lv
+    shell: lvcreate -L 6g -n {{ lv }} {{ vg }}
+    when: parChk|changed
+
+  - name: create fs
+    shell: mkfs -t ext4 /dev/{{ vg }}/{{ lv }}
+    when: parChk|changed
+
+  # - name: get /dev/sdd1 UUID
+    # command: blkid|grep sdd1|awk '{print $2}'|awk -F\" '{print $2}'
+    # register: blkid
+
+  - name: mount /opt/splunkforwarder
+    mount:
+      name: "{{ mount }}"
+      fstype: "{{ filesystem }}"
+      src: /dev/mapper/{{ vg }}-{{ lv }}
+      state: mounted
+      dump: 1
+      passno: 2
+      # with_items: { BLKID: "{{ blkid }}" }

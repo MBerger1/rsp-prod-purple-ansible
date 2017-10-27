@@ -1,0 +1,53 @@
+---
+- hosts: "{{ hosts }}"
+# - hosts: all
+  gather_facts: False
+  user: rsp-mgmt
+  # user: root
+  sudo: yes
+  # sudo: no
+
+  tasks:
+  - name: "check connect"
+    ping: 
+    connection: paramiko
+
+  - name: "step 1: rsync /home -> /export/home"
+    shell: rsync -av /home /export
+    register: rsync_out
+    changed_when: "rsync_out.rc == 0"
+
+  - name: "step 2: mv /home /home.old"
+    shell: mv /home /home.old
+    register: mv_out
+    failed_when: "mv_out.rc != 0"
+
+  - name: "step 3: mkdir /home"
+    shell: mkdir /home 
+    register: mkdir_out
+    failed_when: "mkdir_out.rc != 0"
+
+  - name: "step 4: umount /export/home"
+    shell: umount /export/home 
+    register: mkdir_out
+    failed_when: "mkdir_out.rc != 0"
+
+  - name: "step 5: backup /etc/fstab"
+    shell: 'cp /etc/fstab /etc/fstab.`date "+%Y%m%d"`.$$'
+    register: bup
+    failed_when: "bup.rc != 0"
+
+  - name: "step 6: change mount in /etc/fstab - careful here!"
+    shell: 'perl -npe " s|/export/home|/home|g " -i /etc/fstab'
+    register: swap
+    failed_when: "swap.rc != 0"
+
+  - name: "step 7: mount new /home"
+    shell: mount /home
+    register: mnt
+    failed_when: "mnt.rc != 0"
+
+  - name: "step 8: rsync the data"
+    shell: rsync -av /home.old/ home
+    register: pop
+    failed_when: "pop.rc != 0"   
